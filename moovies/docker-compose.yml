@@ -1,0 +1,43 @@
+---
+version: "2.3"
+services:
+  postgres:
+    image: "postgres:11-alpine"
+    container_name: my_postgres
+    hostname: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: db
+      POSTGRES_PASSWORD: secret  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h postgres -p 5432"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+  
+  movie-app:
+    container_name: movie-app
+    image: "movie-app:latest"
+    build:
+      context: ./
+      dockerfile: ./cmd/movies/Dockerfile
+    cpu_count: 4
+    restart: always
+    hostname: "movie-app"
+    ports:
+      - "8050:8050"
+    environment:
+      DB_PASS: secret
+      DB_NAME: db 
+      DB_USER: db  
+      DB_HOST: postgres
+      DB_PORT: 5432
+      APP_USERNAME: user1
+      APP_PASSWORD: pass1
+      PORT: 8050
+    depends_on:
+      postgres:
+        condition: service_healthy  
+  
